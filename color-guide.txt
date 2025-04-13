@@ -1,0 +1,4 @@
+background: #373738
+font: #faf9fe
+accent1: #e08e56
+accent2: #5ac5d0
