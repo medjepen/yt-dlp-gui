@@ -43,6 +43,6 @@ curl -X POST http://localhost:8000/download \
       "--postprocessor-args",
       "-c:v libx264 -crf 28 -c:a aac -movflags +faststart"
     ],
-    "output_dir": "./my-videos"
+    "output_dir": "./downloads"
   }'
 ```
