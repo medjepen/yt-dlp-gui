@@ -1,0 +1,24 @@
+# backend/Dockerfile
+FROM python:3.11-slim
+
+# ffmpegインストール
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+# 作業ディレクトリ作成
+WORKDIR /app
+
+# 依存パッケージのコピーとインストール
+COPY ../backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ソースコードコピー
+COPY ../backend/ .
+
+# ポート指定(開発用)
+EXPOSE 8000
+
+# uvicornでFastAPI起動(開発用)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
