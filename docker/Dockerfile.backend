@@ -1,24 +1,122 @@
 # backend/Dockerfile
-FROM python:3.11-slim
+# -------------------
+# FFmpegのビルド用ベース（Debian slimで軽量）
+# -------------------
+FROM debian:stable-slim as ffmpeg-build
 
-# ffmpegインストール
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+ENV DEBIAN_FRONTEND=noninteractive
 
-# 作業ディレクトリ作成
+# ビルドと必要な開発ツール・ライブラリをインストール
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # ビルドに必要なツール
+    build-essential \ 
+    # ライブラリの構成取得       
+    pkg-config \ 
+    # OpenH264などの取得用            
+    curl \    
+    # HTTPS通信用               
+    ca-certificates \    
+    # FFmpeg取得用    
+    git \        
+    # x86向けアセンブリコンパイラ            
+    yasm \             
+    # HTTPSサポート用      
+    libssl-dev \     
+    # Opus音声エンコーダー        
+    libopus-dev \   
+    # ffmpegのビルド用         
+    nasm \             
+    && rm -rf /var/lib/apt/lists/*
+
+# libvpxビルド（libvpx.so.7をインストール）
+RUN git clone --depth=1 https://chromium.googlesource.com/webm/libvpx /libvpx && \
+    mkdir -p /libvpx-build && \
+    cd /libvpx && \
+    ./configure --prefix=/libvpx-build --disable-examples --disable-unit-tests --enable-shared && \
+    make -j$(nproc) && make install
+# libvpx.so.7のパスを確認
+RUN find / -name "libvpx.so*" 2>/dev/null > /tmp/found.txt && cat /tmp/found.txt
+
+# libopenh264のソースコードビルド
+# pkg-configで取得するためにソースコードからビルドするが、後でcisco提供バイナリ版に差し替える
+RUN git clone https://github.com/cisco/openh264 && \
+    cd openh264 && \
+    make -j$(nproc) && \
+    make install
+RUN find / -name "libopenh264.so*" 2>/dev/null > /tmp/found.txt && cat /tmp/found.txt
+
+# FFmpegをクローン（最新安定版を利用）
+RUN git clone --depth=1 https://github.com/ffmpeg/ffmpeg.git /ffmpeg
+
+# FFmpegをLGPL構成でビルド（libx264・fdk-aacは使わない, libvpxのビルドパスを指定）
+RUN cd /ffmpeg && ./configure \
+    --prefix=/ffmpeg_build \
+    --disable-static \
+    --enable-shared \
+    --disable-gpl \
+    --disable-nonfree \
+    --enable-libvpx \
+    --enable-libopus \
+    --enable-libopenh264 \
+    --extra-ldflags="-L/openh264 -lopenh264 -L/libvpx-build/lib -lvpx" \
+    --extra-cflags="-I/openh264 -I/libvpx-build/include" \
+    && make -j$(nproc) && make install
+
+# -------------------
+# 本番用の軽量なイメージに移す
+# -------------------
+FROM python:3.13-slim
+
+# 必要なランタイムライブラリのインストール
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # OpenH264ダウンロード用
+    curl \
+    bzip2 \
+    # VP8/9サポート    
+    libvpx7 \
+    # Opus音声サポート                 
+    libopus0 \                
+    && rm -rf /var/lib/apt/lists/*
+
+# FFmpegのバイナリをlibvpx.so.7をruntimeにコピー
+COPY --from=ffmpeg-build /ffmpeg_build /usr/local
+COPY --from=ffmpeg-build /libvpx-build/lib/libvpx.so.11 /usr/lib/libvpx.so.11
+# libvpx.soのシンボリックリンクを作成
+RUN ln -s /usr/lib/libvpx.so.11 /usr/lib/libvpx.so
+
+# CiscoのOpenH264バイナリをダウンロードして配置（BSDライセンス）
+# https://github.com/cisco/openh264/releases を確認して最新のものを指定する(SONAME so.8)
+RUN mkdir -p /openh264 && \
+    curl -L -o /openh264/libopenh264.so.bz2 http://ciscobinary.openh264.org/libopenh264-2.6.0-linux64.8.so.bz2 && \
+    bunzip2 /openh264/libopenh264.so.bz2 && \
+    mv /openh264/libopenh264.so /openh264/libopenh264.so.8 && \
+    chmod +x /openh264/libopenh264.so.8
+# libopenh264.soのパスを確認
+RUN find / -name "libopenh264.so*" 2>/dev/null > /tmp/found.txt && cat /tmp/found.txt
+# OpenH264のバイナリを差し替え
+COPY --from=ffmpeg-build /openh264/libopenh264.so.8 /usr/lib/libopenh264.so.8
+# libopenh264.soのシンボリックリンクを作成
+RUN ln -sf /usr/lib/libopenh264.so.8 /usr/local/lib/libopenh264.so.8 && \
+    ln -sf /usr/lib/libopenh264.so.8 /usr/local/lib/libopenh264.so
+# ソースコードビルド版を削除
+RUN find /usr/local -name "*openh264*" || true > /tmp/found.txt && cat /tmp/found.txt
+RUN rm -rf \
+    /user/local/lib/libopenh264* \
+    /usr/local/lib/pkgconfig/openh264.pc \
+    /usr/local/lib/cmake/openh264 \
+    /usr/local/include/wels \
+    /path/to/openh264-source \
+    /path/to/openh264-build  \
+
+# FastAPI アプリケーションのセットアップ
 WORKDIR /app
-
-# 依存パッケージのコピーとインストール
 COPY ../backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-
-# ソースコードコピー
 COPY ../backend/ .
+# ffmpegの関連ライブラリへのパス
+ENV LD_LIBRARY_PATH=/usr/local/lib
 
 # ポート指定(開発用)
 EXPOSE 8000
-
 # uvicornでFastAPI起動(開発用)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

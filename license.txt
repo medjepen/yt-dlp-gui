@@ -1,0 +1,12 @@
+This software distribution includes FFmpeg, built under the terms of the GNU Lesser General Public License (LGPL) version 2.1 or later.
+
+Optional codecs included:
+- libopus (BSD License)
+- libvpx (Google BSD-style License)
+- OpenH264 by Cisco (Binary License with royalty-free terms, BSD-style)
+  See: https://www.openh264.org/BINARY_LICENSE.txt
+
+All other software and dependencies are compatible with LGPL.
+This distribution avoids any nonfree or GPL-only components such as x264 or fdk-aac.
+
+For FFmpeg source code, visit: https://github.com/ffmpeg/ffmpeg
