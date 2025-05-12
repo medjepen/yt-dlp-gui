@@ -1,3 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #373738;
+  --color-fg: #faf9fe;
+  --color-accent1: #e08e56;
+  --color-accent2: #5ac5d0;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
