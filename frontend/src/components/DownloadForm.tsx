@@ -19,7 +19,7 @@ export const DownloadForm = () => {
             if (optionQuality == 'best') {
                 options.push('-f', 'bestvideo*+bestaudio/best');
             } else {
-                options.push('-f', `bv[height<=${optionQuality}+ba/b[height<=${optionQuality}]]`);
+                options.push('-f', `bv[height<=${optionQuality}]+ba/b[height<=${optionQuality}]`);
             }
         }
         if (optionFormat) {
