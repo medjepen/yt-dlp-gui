@@ -1,3 +1,4 @@
+import subprocess
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -68,3 +69,25 @@ def test_create_job_and_check_status(mock_subprocess_run):
     hello_data = hello_res.json()
     print("GET / response >>> \n", hello_data)
     assert "message" in hello_data
+
+
+@patch(
+    "backend.main.subprocess.run",
+    side_effect=subprocess.CalledProcessError(1, "yt-dlp"),
+)
+def test_download_failure_returns_500(mock_run):
+    """
+    # テストの目的
+    - POST /download で誤ったpayloadを渡した際にエラーが返ってくるか
+    """
+    payload = {
+        "url": "https://invalid/watch?v=CT2_P2DZBR0",
+        "options": ["-f", "best"],
+        "output_dir": "",
+    }
+    # 1. POST /download リクエスト
+    res = client.post("/download", json=payload)
+    assert res.status_code == 500
+    data = res.json()
+    print("POST /download response >>> \n", data)
+    assert "Download failed" in data["detail"]

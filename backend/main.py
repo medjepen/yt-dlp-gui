@@ -63,12 +63,6 @@ def download_video(req: DownloadRequest):
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
 
-    # return {
-    #     "status": "success",
-    #     "video_id": video_id,
-    #     "saved_to": os.path.abspath(download_dir),
-    # }
-
 
 @app.get("/status/{job_id}")
 def read_status(job_id: str):
@@ -88,13 +82,3 @@ def read_jobs_by_status():
 def read_all():
     job_all = get_all_jobs()
     return job_all
-
-
-# @app.post("/options")
-# def download_video(req: DownloadRequest):
-#     try:
-#         # yt-dlp
-#         subprocess.run(["yt-dlp", req.url, "-o", "%(title)s.%(ext)s"], check=True)
-#         return {"status": "success"}
-#     except subprocess.CalledProcessError as e:
-#         raise HTTPException(status_code=500, detail=str(e))
