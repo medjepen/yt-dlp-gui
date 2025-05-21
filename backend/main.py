@@ -6,10 +6,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from .job_store import (
+    create_job_entry,
+    get_all_jobs,
+    get_job_status,
+    get_jobs_by_status,
+    update_job_status,
+)
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # frontendのURL
+    allow_origins=["http://localhost:5173"],  # frontendのURL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,6 +39,9 @@ def read_root():
 
 @app.post("/download")
 def download_video(req: DownloadRequest):
+    # ID発行
+    job_id = create_job_entry()
+
     # 保存先ディレクトリ設定
     download_dir = req.output_dir or DEFAULT_DOWNLOAD_DIR
 
@@ -45,26 +56,39 @@ def download_video(req: DownloadRequest):
     print("Command: ", command)
     try:
         # yt-dlp
+        update_job_status(job_id, status="in_progress", progress=10)
         os.makedirs(download_dir, exist_ok=True)
         subprocess.run(command, check=True)
-        return {"status": "success", "video_id": video_id}
+        return {"job_id": job_id, "message": "Job created"}
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
 
-    return {
-        "status": "success",
-        "video_id": video_id,
-        "saved_to": os.path.abspath(download_dir)
-    }
+    # return {
+    #     "status": "success",
+    #     "video_id": video_id,
+    #     "saved_to": os.path.abspath(download_dir),
+    # }
 
-# @app.post("/status")
-# def download_video(req: DownloadRequest):
-#     try:
-#         # yt-dlp
-#         subprocess.run(["yt-dlp", req.url, "-o", "%(title)s.%(ext)s"], check=True)
-#         return {"status": "success"}
-#     except subprocess.CalledProcessError as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/status/{job_id}")
+def read_status(job_id: str):
+    status = get_job_status(job_id)
+    if status is None:
+        return {"error": "Job not found"}
+    return status
+
+
+@app.get("/status/{status}")
+def read_jobs_by_status():
+    job_all = get_jobs_by_status()
+    return job_all
+
+
+@app.get("/all")
+def read_all():
+    job_all = get_all_jobs()
+    return job_all
+
 
 # @app.post("/options")
 # def download_video(req: DownloadRequest):
