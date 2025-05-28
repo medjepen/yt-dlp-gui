@@ -1,20 +1,21 @@
 # docker-compose.yml
 
-version: '3.8'
+version: "3.8"
 services:
-    backend:
-      image: yt-dlp-gui-backend:latest
-      platform: linux/amd64
-      container_name: yt-dlp-gui-backend
-      # ビルド済みのイメージを使用する場合は、以下の行をコメントアウト
-      # build:
-      #   context: .
-      #   dockerfile: ./docker/Dockerfile.backend
-      environment:
-        - PYTHONUNBUFFERED=1
-      ports:
-        - "8000:8000"
-      volumes:
-        - ./backend:/app
-        - ./host_downloads:/downloads
-      restart: unless-stopped
+  backend:
+    image: yt-dlp-gui-backend:latest
+    platform: linux/amd64
+    container_name: yt-dlp-gui-backend
+    # ビルド済みのイメージを使用する場合は、以下の行をコメントアウト
+    # build:
+    #   context: .
+    #   dockerfile: ./docker/Dockerfile.backend
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/backend
+      - ./host_downloads:/downloads
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped

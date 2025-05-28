@@ -2,5 +2,6 @@ fastapi
 ffmpeg-python
 httpx
 pytest
+pytest-asyncio
 yt-dlp
 uvicorn

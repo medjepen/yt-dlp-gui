@@ -1,5 +1,6 @@
 import os
 import subprocess
+import threading
 import uuid
 
 from fastapi import FastAPI, HTTPException
@@ -56,26 +57,48 @@ def download_video(req: DownloadRequest):
     print("Command: ", command)
     try:
         # yt-dlp
-        update_job_status(job_id, status="in_progress", progress=10)
         os.makedirs(download_dir, exist_ok=True)
-        subprocess.run(command, check=True)
+        _run_yt_dlp_async(job_id, command)
         return {"job_id": job_id, "message": "Job created"}
+    except FileExistsError:
+        pass  # 他のプロセスが同時にファイル作成していても無視する
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
+
+
+def _run_yt_dlp_async(job_id, command):
+    def worker():
+        update_job_status(job_id, status="in_progress", progress=10)
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        for line in process.stdout:
+            print(f"[yt-dlp] {line.strip()}")
+            # lineを解析してprogressを更新
+        process.wait()
+        if process.returncode == 0:
+            update_job_status(job_id, status="completed", progress=100)
+        else:
+            update_job_status(job_id, status="failed", error="yt-dlp error")
+
+    threading.Thread(target=worker).start()
 
 
 @app.get("/status/{job_id}")
 def read_status(job_id: str):
     status = get_job_status(job_id)
     if status is None:
-        return {"error": "Job not found"}
+        return {"status": "failed", "error": "Job not found"}
     return status
 
 
 @app.get("/status/{status}")
-def read_jobs_by_status():
-    job_all = get_jobs_by_status()
-    return job_all
+def read_jobs_by_status(status: str):
+    job_by_status = get_jobs_by_status(status)
+    return job_by_status
 
 
 @app.get("/all")
