@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { AddOptionList } from "./AddOptionList";
 
 
 export const DownloadForm = () => {
     const [url, setUrl] = useState('');
     const [optionQuality, setOptionQuality] = useState('1080');
     const [optionFormat, setOptionFormat] = useState('mp4');
+    const [optionExtra, setOptionExtra] = useState('');
     const [audioOnly, setAudioOnly] = useState(false);
     const [downloadPath, setDownloadPath] = useState('');
 
@@ -24,6 +26,10 @@ export const DownloadForm = () => {
         }
         if (optionFormat) {
             options.push('--merge-output-format', `${optionFormat}`);
+        }
+        // 追加オプションがある場合は1つのリストにしておく
+        if (optionExtra) {
+            options.push(optionExtra);
         }
 
         try {
@@ -134,6 +140,9 @@ export const DownloadForm = () => {
                                 </select>
                             </div>
                         </div>
+                        <div>
+                            <AddOptionList onChange={optionExtra} />
+                        </div>
                         <label className="block mb-2 text-left text-sm">
                             <input
                                 type="checkbox"
@@ -142,22 +151,6 @@ export const DownloadForm = () => {
                                 className="mr-2"
                             />Download Audio Only
                         </label>
-                        {/* <textarea
-                            rows={2}
-                            className="
-                                w-full 
-                                p-2 
-                                rounded-md 
-                                bg-bg
-                                border 
-                                border-accent2 
-                                focus:outline-none 
-                                focus:ring-2 
-                                focus:ring-accent2"
-                            placeholder="-f 'bv[height<=720]+ba/b[height<=720]' ..."
-                            value={options}
-                            onChange={(e) => setOptions(e.target.value)}
-                        ></textarea> */}
                     </div>
                     <div>
                         <label className="block mb-1 text-left text-sm">保存先パス</label>
