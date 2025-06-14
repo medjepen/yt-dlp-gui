@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { AddOptionList } from "./AddOptionList";
+import { GetVideoInfo } from "./GetVideoInfo";
 
+type Props = {
+  url: string;
+  optionQuality: string;
+  optionFormat: string;
+  optionExtra: string[];
+  audioOnly: boolean;
+  downloadPath: string;
+};
 
-export const DownloadForm = () => {
-    const [url, setUrl] = useState('');
-    const [optionQuality, setOptionQuality] = useState('1080');
-    const [optionFormat, setOptionFormat] = useState('mp4');
-    const [optionExtra, setOptionExtra] = useState<string[]>([]);
-    const [audioOnly, setAudioOnly] = useState(false);
-    const [downloadPath, setDownloadPath] = useState('');
-
+export const DownloadForm = ({
+    url,
+    optionQuality,
+    optionFormat,
+    optionExtra,
+    audioOnly,
+    downloadPath,
+    }:Props) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // optionsの設定
@@ -72,24 +81,15 @@ export const DownloadForm = () => {
     };
 
     return (
-        <div className="
-            min-h-screen
-            bg-bg
-            text-fg
-            flex items-center
-            justify-center p-6
-            ">
             <div className="
-                w-full max-w-xl
                 bg-[#2f2f30]
                 rounded-2xl
                 shadow-lg
-                p-8
+                p-6
                 space-y-6">
-                <h2 className="font-sans font-light text-fg text-2xl">動画ダウンロード</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block mb-1 text-left text-sm">動画URL</label>
+                        <label className="block mb-1 text-left text-sm">ファイル名</label>
                         <input
                             type="text"
                             className="
@@ -199,6 +199,5 @@ export const DownloadForm = () => {
                     </button>
                 </form>
             </div>
-        </div>
     );
 };

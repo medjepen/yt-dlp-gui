@@ -293,7 +293,9 @@ get_jobs_by_status(status)（状態ごとのジョブ取得）
   ```
 
 - ビルドの指定
-  - `docker compose build --platform=linux/amd64`
+  - `docker compose build`
+    - MacOSのM1 チップで amd64 向けの Docker イメージをビルドする場合は、`--platform=linux/amd64` オプションをつける必要がある
+    - `docker compose build --platform=linux/amd64`
   - `unknown flag: --platform`とおこられるとき
     - `docker compose` が古いか何かでサポートされていない構文扱いになる
     - 代わりに`docker-compose.yml`で platform 指定する
@@ -367,3 +369,8 @@ get_jobs_by_status(status)（状態ごとのジョブ取得）
     allow_headers=["*"],
     )
   ```
+
+## Other
+### VScodeのcopilotによるコード補完
+- Copilotが動くと重たい&補完が邪魔なときがあるため無効化する方法をメモ
+- [Visual Studio Codeで、GitHub Copilotを無効化(Disable)する方法](https://www.crossroad-tech.com/entry/GitHubCopilot_disable#google_vignette)

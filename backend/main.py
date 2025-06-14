@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import threading
 import uuid
@@ -6,6 +7,7 @@ import uuid
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from yt_dlp import YoutubeDL
 
 from .job_store import (
     create_job_entry,
@@ -29,8 +31,13 @@ DEFAULT_DOWNLOAD_DIR = "./downloads"
 
 class DownloadRequest(BaseModel):
     url: str
+    filename: str
     options: list[str] = []
     output_dir: str | None = None
+
+
+def sanitize_filename(filename: str) -> str:
+    return re.sub(r'[\\/*?:"<>|]', "-", filename)
 
 
 @app.get("/")
@@ -38,8 +45,39 @@ def read_root():
     return {"message": "Welcome to the Video Downloader API!"}
 
 
+@app.get("/video_info")
+def get_video_info(url: str):
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True,
+        "no_warnings": True,
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        return {
+            "title": info.get("title"),
+            "uploader": info.get("uploader"),
+            "thumbnail": info.get("thumbnail"),
+            "duration": info.get("duration"),
+            "formats": [
+                {
+                    "format_id": f["format_id"],
+                    "ext": f["ext"],
+                    "resolution": f.get("resolution"),
+                }
+                for f in info.get("formats", [])
+                if f.get("vcodec") != "none" and f.get("acodec") != "none"
+            ],
+        }
+
+
 @app.post("/download")
 def download_video(req: DownloadRequest):
+    # ファイル名のサニタイズ
+    req.filename = sanitize_filename(req.filename)
+    # デバッグ用
+    print("Sanitized filename:", req.filename)
+
     # ID発行
     job_id = create_job_entry()
 
