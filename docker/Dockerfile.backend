@@ -14,8 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \ 
     # OpenH264などの取得用            
     curl \    
-    # HTTPS通信用               
+    # HTTPS通信用
     ca-certificates \    
+    # HTTPSサポート用(gnutlsを使う)
+    libgnutls28-dev \
     # FFmpeg取得用    
     git \        
     # x86向けアセンブリコンパイラ            
@@ -55,9 +57,11 @@ RUN cd /ffmpeg && ./configure \
     --enable-shared \
     --disable-gpl \
     --disable-nonfree \
+    --disable-openssl \
     --enable-libvpx \
     --enable-libopus \
     --enable-libopenh264 \
+    --enable-gnutls \
     --extra-ldflags="-L/openh264 -lopenh264 -L/libvpx-build/lib -lvpx" \
     --extra-cflags="-I/openh264 -I/libvpx-build/include" \
     && make -j$(nproc) && make install

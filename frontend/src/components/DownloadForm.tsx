@@ -6,7 +6,7 @@ export const DownloadForm = () => {
     const [url, setUrl] = useState('');
     const [optionQuality, setOptionQuality] = useState('1080');
     const [optionFormat, setOptionFormat] = useState('mp4');
-    const [optionExtra, setOptionExtra] = useState('');
+    const [optionExtra, setOptionExtra] = useState<string[]>([]);
     const [audioOnly, setAudioOnly] = useState(false);
     const [downloadPath, setDownloadPath] = useState('');
 
@@ -27,9 +27,18 @@ export const DownloadForm = () => {
         if (optionFormat) {
             options.push('--merge-output-format', `${optionFormat}`);
         }
-        // 追加オプションがある場合は1つのリストにしておく
-        if (optionExtra) {
-            options.push(optionExtra);
+        // 追加オプションがある場合は分割してリストに追加する
+        if (optionExtra.length > 0) {
+            for (const opt of optionExtra){
+                const parts = opt.trim().split(/\s+/); // 空白文字で分割
+                if (parts.length > 0) {
+                    options.push(...parts);
+                } else {
+                    options.push(opt);
+                }
+            }
+            console.log("追加されたオプション", optionExtra);
+            console.log("オプション", options);
         }
 
         try {
@@ -112,6 +121,8 @@ export const DownloadForm = () => {
                                         p-2
                                         border
                                         border-accent2
+                                        bg-bg
+                                        text-text
                                         rounded
                                         ">
                                     <option value="best">最高画質</option>
@@ -132,6 +143,8 @@ export const DownloadForm = () => {
                                         p-2
                                         border
                                         border-accent2
+                                        bg-bg
+                                        text-text
                                         rounded
                                         ">
                                     <option value="mp4">MP4</option>
@@ -141,7 +154,7 @@ export const DownloadForm = () => {
                             </div>
                         </div>
                         <div>
-                            <AddOptionList onChange={optionExtra} />
+                            <AddOptionList onChange={setOptionExtra} />
                         </div>
                         <label className="block mb-2 text-left text-sm">
                             <input

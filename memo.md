@@ -251,6 +251,7 @@ get_jobs_by_status(status)（状態ごとのジョブ取得）
   - `libx264`(H.264 エンコーダ)
   - `libx265`(H.265)
   - `libfdk_aac`(高品質 AAC)
+  - `OpenSSL`(暗号化ライブラリ)
   - LGPL で利用するためにはこれらは除外する必要がある
     - `libx264`は代替版の`OpenH264`というバイナリが cisco から公開されているのでそれを使う
 - 使って良い LGPL または自由ライセンスのライブラリ
@@ -258,6 +259,7 @@ get_jobs_by_status(status)（状態ごとのジョブ取得）
   - `libopus`(Opus 音声: BSD)
   - `openh264`(Cisco: BSD, ⭐️ 要同梱通知)
     - [OpenH264](http://github.com/cisco/openh264)
+  - `GnuTLS`(GNU C ライブラリ: LGPL, https通信用)
 - LGPL 版か確認する方法
   - **`ffmpeg -version`の標準出力の中に`--enable-gpl`が無いこと**
 - LGPL 版は自前ビルドが安牌とのことなので、そうする([Dockerfile.backend](docker/Dockerfile.backend) を参照)

@@ -4,7 +4,8 @@ version: "3.8"
 services:
   backend:
     image: yt-dlp-gui-backend:latest
-    platform: linux/amd64
+    # MacOSのM1/M2チップを使用している場合は、以下の行をONにする
+    # platform: linux/amd64
     container_name: yt-dlp-gui-backend
     # ビルド済みのイメージを使用する場合は、以下の行をコメントアウト
     # build:

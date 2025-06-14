@@ -46,7 +46,6 @@ export const AddOptionList: React.FC<Props> = ({ onChange }) => {
                             value={opt}
                             onChange={(e) => handleChange(index, e.target.value)}
                             placeholder="--get-comments"
-                            disabled={optionList.length === 1}
                         />
                         <button
                             onClick={() => handleRemove(index)}
