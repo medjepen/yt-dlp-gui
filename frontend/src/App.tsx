@@ -3,8 +3,22 @@ import { useState } from "react";
 import { DownloadForm } from './components/DownloadForm';
 import { GetVideoInfo } from './components/GetVideoInfo';
 
+type VideoInfo = {
+  title: string;
+  thumbnail: string;
+  uploader: string;
+  duration: number;
+  formats: {
+    format_id: string;
+    ext: string;
+    resolution: string;
+  }[];
+}
+
 function App() {
   const [url, setUrl] = useState('');
+  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [filename, setFilename] = useState('');
   const [optionQuality, setOptionQuality] = useState('1080');
   const [optionFormat, setOptionFormat] = useState('mp4');
   const [optionExtra, setOptionExtra] = useState<string[]>([]);
@@ -27,9 +41,14 @@ function App() {
               <GetVideoInfo 
                 url={url}
                 setUrl={setUrl}
+                videoInfo={videoInfo}
+                setVideoInfo={setVideoInfo}
               />
-              {/* <DownloadForm
+              <DownloadForm
                 url={url}
+                filename={filename}
+                setFilename={setFilename}
+                videoInfo={videoInfo}
                 optionQuality={optionQuality}
                 setOptionQuality={setOptionQuality}
                 optionFormat={optionFormat}
@@ -40,7 +59,7 @@ function App() {
                 setAudioOnly={setAudioOnly}
                 downloadPath={downloadPath}
                 setDownloadPath={setDownloadPath}
-              /> */}
+              />
           </div>
       </div>
   );

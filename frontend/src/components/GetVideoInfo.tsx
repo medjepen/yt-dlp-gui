@@ -1,16 +1,31 @@
 import { useState } from "react";
 import { formatDuration } from "./FormatDuration";
 
+type VideoInfo = {
+  title: string;
+  thumbnail: string;
+  uploader: string;
+  duration: number;
+  formats: {
+    format_id: string;
+    ext: string;
+    resolution: string;
+  }[];
+};
+
 type Props = {
   url: string;
   setUrl: (url: string) => void;
+  videoInfo: VideoInfo | null;
+  setVideoInfo: (info: VideoInfo) => void;
 };
 
 export const GetVideoInfo = ({
     url,
     setUrl,
+    videoInfo,
+    setVideoInfo
     }:Props) => {
-    const [videoInfo, setVideoInfo] = useState<any | null>(null);
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {

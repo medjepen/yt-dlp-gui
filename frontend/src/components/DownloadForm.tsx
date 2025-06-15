@@ -1,24 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddOptionList } from "./AddOptionList";
 import { GetVideoInfo } from "./GetVideoInfo";
 
+type VideoInfo = {
+  title: string;
+  thumbnail: string;
+  uploader: string;
+  duration: number;
+  formats: {
+    format_id: string;
+    ext: string;
+    resolution: string;
+  }[];
+};
+
 type Props = {
   url: string;
+  filename: string;
+  setFilename: (filename: string) => void;
+  videoInfo: VideoInfo | null;
   optionQuality: string;
+  setOptionQuality: (optionQuality: string) => void;
   optionFormat: string;
+  setOptionFormat: (optionFormat: string) => void;
   optionExtra: string[];
+  setOptionExtra: (optionExtra: string[]) => void;
   audioOnly: boolean;
+  setAudioOnly: (audioOnly: boolean) => void;
   downloadPath: string;
+  setDownloadPath: (downloadPath: string) => void;
 };
 
 export const DownloadForm = ({
     url,
+    filename,
+    videoInfo,
+    setFilename,
     optionQuality,
+    setOptionQuality,
     optionFormat,
+    setOptionFormat,
     optionExtra,
+    setOptionExtra,
     audioOnly,
+    setAudioOnly,
     downloadPath,
+    setDownloadPath,
     }:Props) => {
+    // 動画タイトルをファイル名のデフォルト値に設定
+    useEffect(() => {
+        if (videoInfo && !filename) {
+            setFilename(videoInfo.title);
+        }
+    }, [videoInfo, filename, setFilename]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // optionsの設定
@@ -58,6 +93,7 @@ export const DownloadForm = ({
                 },
                 body: JSON.stringify({
                     url,
+                    filename,
                     options: options || [
                         '-f',
                         'bv[height<=720]+ba/b[height<=720]',
@@ -69,7 +105,8 @@ export const DownloadForm = ({
             });
 
             if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
+                const err = await res.text();
+                throw new Error(`HTTP error! status: ${res.status}\nDetails: ${err}`);
             }
             const data = await res.json();
             // debug
@@ -102,9 +139,9 @@ export const DownloadForm = ({
                                 focus:outline-none 
                                 focus:ring-2 
                                 focus:ring-accent2"
-                            placeholder="https://www.youtube.com/..."
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="動画タイトルなど"
+                            value={filename}
+                            onChange={(e) => setFilename(e.target.value)}
                         />
                     </div>
                     <div>
